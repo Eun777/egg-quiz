@@ -1,4 +1,5 @@
 // Story data
+
 const story = [
     {
         img: "start.png", // Add your start illustration here
@@ -150,34 +151,49 @@ const story = [
         return ((count / total) * 100).toFixed(1);
     }
     
-// Add result image mapping at the top with your story data
-const eggResultImages = {
-    sunny: "sunny-egg-result.png",
-    hardboiled: "hardboiled-egg-result.png",
-    scrambled: "scrambled-egg-result.png",
-    poached: "poached-egg-result.png",
-    deviled: "deviled-egg-result.png"
-};
+    async function trackCompletion(eggType) {
+        try {
+            const response = await fetch('/api/stats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ eggType })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update stats');
+            }
+            
+            const stats = await response.json();
+            
+            return {
+                userNumber: stats.completions,
+                totalCompletions: stats.completions,
+                eggStats: stats.eggs
+            };
+        } catch (error) {
+            console.error('Error tracking completion:', error);
+            // Fallback to localStorage if API fails
+            return trackLocalCompletion(eggType);
+        }
+    }
 
-// Rest of your existing story data and functions remain the same until showResult()
-
-function showResult() {
+// Update showResult to handle async tracking
+async function showResult() {
     const storyDiv = document.getElementById("story");
     const optionsDiv = document.getElementById("options");
     const illustrationImg = document.getElementById("illustration-img");
         
-    // Get the highest score
     const highestScore = Object.keys(scores).reduce((a, b) =>
         scores[a] > scores[b] ? a : b
     );
 
-    // Get second highest and lowest scores
     const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-    const secondHighest = sortedScores[1][0];
     const lowest = sortedScores[sortedScores.length - 1][0];
 
     // Track completion and get stats
-    const stats = trackLocalCompletion(highestScore);
+    const stats = await trackCompletion(highestScore);
 
     // Update the illustration to show the corresponding egg type
     illustrationImg.src = eggResultImages[highestScore];
