@@ -1,4 +1,11 @@
 // Story data
+const eggResultImages = {
+    sunny: "sunny-egg-result.png",
+    hardboiled: "hardboiled-egg-result.png",
+    scrambled: "scrambled-egg-result.png",
+    poached: "poached-egg-result.png",
+    deviled: "deviled-egg-result.png"
+};
 
 const story = [
     {
@@ -89,38 +96,44 @@ const story = [
     }
 
     function displayQuestion() {
-    const question = story[currentQuestion];
-    const storyDiv = document.getElementById("story");
-    const optionsDiv = document.getElementById("options");
-    const illustrationImg = document.getElementById("illustration-img");
-
-    updateProgressBar();
-
-    // Update text and image
-    illustrationImg.src = question.img;
-    storyDiv.textContent = question.text;
-
-    // Update options
-    optionsDiv.innerHTML = ""; // Clear previous buttons
-    question.options.forEach((option, index) => {
-        const button = document.createElement("button");
-        button.textContent = option.text;
-        button.onclick = () => {
-        if (option.action === "next") {
-            currentQuestion++;
-            displayQuestion();
-        } else {
-            scores[option.points]++;
-            currentQuestion++;
-            if (currentQuestion < story.length) {
-                displayQuestion();
-            } else {
-            showResult();
-            }
-        }
-        };
-        optionsDiv.appendChild(button);
-    });
+        const question = story[currentQuestion];
+        const storyDiv = document.getElementById("story");
+        const optionsDiv = document.getElementById("options");
+        const illustrationImg = document.getElementById("illustration-img");
+    
+        updateProgressBar();
+    
+        // Update text and image
+        illustrationImg.src = question.img;
+        storyDiv.textContent = question.text;
+    
+        // Update options
+        optionsDiv.innerHTML = ""; // Clear previous buttons
+        question.options.forEach((option, index) => {
+            const button = document.createElement("button");
+            button.textContent = option.text;
+            button.onclick = () => {
+                if (option.action === "next") {
+                    currentQuestion++;
+                    displayQuestion();
+                } else {
+                    scores[option.points]++;
+                    currentQuestion++;
+                    if (currentQuestion < story.length) {
+                        displayQuestion();
+                    } else {
+                        // Changed to properly handle async showResult
+                        showResult().catch(error => {
+                            console.error('Error showing result:', error);
+                            // Fallback display if there's an error
+                            storyDiv.textContent = "Oops! Something went wrong. Please try again.";
+                            optionsDiv.innerHTML = `<button onclick="restart()">Restart</button>`;
+                        });
+                    }
+                }
+            };
+            optionsDiv.appendChild(button);
+        });
     }
 
     function trackLocalCompletion(eggType) {
